@@ -174,6 +174,83 @@ The ID table is used only when the flash has no valid SFDP table. Partitions
 are added after the probe by the platform, the DT driver or the GPT reader
 (see [partitions-gpt.md](partitions-gpt.md)).
 
+## Discovery in detail
+
+### Identification (`identify()`)
+
+1. `RDID` (9Fh) reads 6 bytes into `info.jedec_id`. All zeros or all `0xff`
+   in the first three bytes means no flash answered (a floating bus):
+   `TEE_ERROR_NOT_SUPPORTED`.
+2. `spi_nor_sfdp_parse()` reads the SFDP space with `RDSFDP` (5Ah), always
+   with 3 address bytes and 8 dummy clocks.
+3. If SFDP is missing or unusable, `spi_nor_ids_lookup()` matches the first
+   three ID bytes in `ids.c`. Neither: "unknown flash", `TEE_ERROR_NOT_SUPPORTED`.
+
+### SFDP parsing (`sfdp.c`, JESD216)
+
+| Step | Check |
+| --- | --- |
+| Header (8 bytes at 0) | Signature `0x50444653` ("SFDP") else `TEE_ERROR_ITEM_NOT_FOUND`; byte 6 = number of parameter headers − 1, at most 8 are read |
+| Parameter headers (8 bytes each from offset 8) | ID = byte 7 << 8 \| byte 0; length in dwords = byte 3; table pointer = bytes 4 to 6 |
+| BFPT (ID `0xff00`) | Must exist and have at least 9 dwords; up to 16 are read |
+| Dword 2: density | Bit 31 clear: size = (value + 1) / 8 bytes; set: size = 2^(value − 3) bytes, value 3 to 66; size 0 is rejected |
+| Dwords 8 and 9: erase types | Four (size exponent, opcode) pairs; exponent 0 = unused; kept sorted by size, duplicates dropped |
+| Dword 1: 4 KiB erase | Used only if dwords 8/9 give no erase type: bits 1:0 = 01 and opcode in bits 15:8 |
+| Dword 1 bits 18:17: address bytes | 00: 3 only; 01: 3 or 4; 10: 4 only; 11: `TEE_ERROR_BAD_FORMAT` |
+| Dword 11 bits 7:4: page size | 2^value; 256 bytes if the table has fewer than 11 dwords |
+| Sanity | Smallest erase ≤ flash size; page size ≤ smallest erase |
+| RPMC table (ID `0xff03`) | Optional; see [rpmc.md](rpmc.md#discovery) |
+
+### ID table (`ids.c`)
+
+Only for parts whose SFDP is missing or wrong. Every entry gets 256-byte
+pages and two erase types: 4 KiB (20h) and 64 KiB (D8h).
+
+| Name | JEDEC ID | Size | 4-byte addresses |
+| --- | --- | --- | --- |
+| w25q128 | ef 40 18 | 16 MiB | no |
+| w25q256 | ef 40 19 | 32 MiB | yes |
+| mx25l12835f | c2 20 18 | 16 MiB | no |
+
+### Address mode (`set_addr_mode()`)
+
+| Flash size | Address mode |
+| --- | --- |
+| ≤ 16 MiB | 3 bytes |
+| > 16 MiB, SFDP says 4-byte capable | `EN4B` (B7h), then 4 bytes for every command |
+| > 16 MiB, 3-byte only | `TEE_ERROR_NOT_SUPPORTED` |
+
+Not yet done: reading SFDP dword 16 for the part's own 4-byte entry method
+(some parts need a write enable first, or use dedicated 4-byte opcodes), and
+leaving 4-byte mode before a reset hands the flash back to a boot ROM that
+expects 3-byte addresses.
+
+### Geometry and info
+
+| Field | Source | Used by |
+| --- | --- | --- |
+| `geo.size` → `info.size` | density | range checks |
+| `geo.page_size` → `info.page_size` | dword 11 | program split |
+| `geo.erase[]` (up to 4, sorted) | dwords 8/9 | erase type pick; `info.erase_size` = smallest, the partition alignment unit |
+| `geo.addr4_capable` | dword 1 | address mode |
+| `geo.rpmc` | RPMC table | RPMC driver |
+| `info.jedec_id`, `info.has_sfdp` | RDID, parse result | boot log, RPMC root key |
+
+The boot log line is `SPI-NOR: ef 40 19, 32768 KiB, SFDP` (or `ID table`).
+
+### Timeouts
+
+| Operation | Timeout |
+| --- | --- |
+| Page program | 10 ms |
+| Erase, and recovery of a busy flash | 5 s |
+| Register access at probe | 1 ms |
+| RPMC command | 5 s |
+
+Status is polled with `RDSR` (05h) until the write-in-progress bit (bit 0)
+clears; the last read is taken after the deadline, so a slow but successful
+operation is not reported as a timeout.
+
 ## Locking and errors
 
 - `nor->lock` serializes every command sequence on one flash; RPMC sessions

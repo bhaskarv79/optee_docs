@@ -30,10 +30,13 @@ upstream optee_os `f77757010`.
 | [file-system.md](05-design/file-system.md) | What a TA gets (GP objects, not POSIX), the hash-tree file system, dirf.db, RPMB FS for comparison |
 | [spinor-store.md](05-design/spinor-store.md) | The SPI-NOR log store: sectors, records, mount, allocation, compaction, a worked example |
 | [integrity.md](05-design/integrity.md) | Keys, exact inputs of every tag and hash, identity binding, check order, tamper matrix |
-| [rollback.md](05-design/rollback.md) | Rollback anchors, anchor selection, RPMC (JESD260) |
+| [rollback.md](05-design/rollback.md) | Rollback anchors, policy, open and commit sequences, the one-commit gap, platform counter contract |
 | [power-loss.md](05-design/power-loss.md) | Atomicity, the state after a power cut at each step, maintenance and limits |
 | [partitions-gpt.md](05-design/partitions-gpt.md) | Flash discovery, partitions from configuration, DT or GPT, normal-world access |
-| [concurrency.md](05-design/concurrency.md) | Locks, lock order, what each one protects |
+| [rpmc.md](05-design/rpmc.md) | RPMC driver: SFDP table, command packets and signatures, root and session keys, sessions, provisioning, errors |
+| [qemu-platform.md](05-design/qemu-platform.md) | QEMU reference platform: hardware model, init, flash layout and image, boot log, porting to a board |
+| [concurrency.md](05-design/concurrency.md) | Execution model, locks, lock order per path, what runs in parallel, unlocked data |
+| [testing.md](05-design/testing.md) | Self tests, GP storage tests, CI, QEMU runs, host fuzzing and harness, mapped to requirements |
 
 ## Reading order
 

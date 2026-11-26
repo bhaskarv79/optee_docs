@@ -135,6 +135,7 @@ From the review of the topic branches (grade B, no critical findings):
 | 8 | Allocation cursor restarts at sector 0 at every mount | `spinor_fs_store.c` | PR 1 |
 | 9 | With anchor 0, a corrupt dirf.db is removed and the store restarts empty | `tee_ree_fs.c` (existing REE FS behaviour) | PR 1 |
 | 10 | optee_docs chapter and DT binding documentation | optee_docs | all |
+| 11 | The partition list has no lock, and `optee-fs` from build options is added at the first storage call, possibly while a PTA request walks the list | `partition.c`, `spinor_fs_store.c` | NS access |
 
 ## 2.4 Status
 
