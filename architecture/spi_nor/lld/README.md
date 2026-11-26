@@ -26,6 +26,7 @@ upstream optee_os `f77757010`.
 | File | Content |
 | --- | --- |
 | [architecture.md](05-design/architecture.md) | Layers, source map, storage IDs, build options, call paths |
+| [driver-stack.md](05-design/driver-stack.md) | The SPI-NOR driver in seven layers: partitions, core API, command layer, discovery, spi-mem, controllers; a write traced through them |
 | [file-system.md](05-design/file-system.md) | What a TA gets (GP objects, not POSIX), the hash-tree file system, dirf.db, RPMB FS for comparison |
 | [spinor-store.md](05-design/spinor-store.md) | The SPI-NOR log store: sectors, records, mount, allocation, compaction, a worked example |
 | [integrity.md](05-design/integrity.md) | Keys, exact inputs of every tag and hash, identity binding, check order, tamper matrix |
@@ -38,7 +39,8 @@ upstream optee_os `f77757010`.
 
 1. [01-requirements.md](01-requirements.md) and
    [02-scope-of-work.md](02-scope-of-work.md) for what is built and why.
-2. [05-design/architecture.md](05-design/architecture.md) for the big picture.
+2. [05-design/architecture.md](05-design/architecture.md) for the big picture. [driver-stack.md](05-design/driver-stack.md)
+   zooms into the SPI-NOR driver.
 3. [05-design/file-system.md](05-design/file-system.md), then
    [spinor-store.md](05-design/spinor-store.md), for the on-media format.
 4. [integrity.md](05-design/integrity.md), [rollback.md](05-design/rollback.md)

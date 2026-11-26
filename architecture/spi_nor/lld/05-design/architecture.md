@@ -75,6 +75,8 @@ Blue boxes are the layers every storage ID shares, orange is the REE FS path, re
 
 The three top layers are common to all storage IDs. REE FS and SPI-NOR FS share the hash-tree file system and differ only below the backend interface; RPMB FS has its own layout. Only SPI-NOR FS keeps every byte in the secure world.
 
+The SPI-NOR part of this stack is broken into its layers in [driver-stack.md](driver-stack.md).
+
 ## Source map
 
 Each layer has one interface struct or entry point that the layer above calls. Paths are relative to `optee_os/`.
